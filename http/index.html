@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>RIG Infos</title>
+
+    <script src="jquery-3.3.1.min.js"></script>
+    <script src="/chartjs/Chart.bundle.min.js"></script>
+    <script src="/chartjs/Chart.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+      function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+          var c = ca[i];
+          while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+          }
+          if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+          }
+        }
+        return "";
+      }
+
+      var socket = io();
+      socket.on('infos',function(data){
+        $('#hashrate_txt').text("Hashrate : " + data.rig.hashrate + " Mh/s");
+        $('#shares_txt').text("Shares : " + data.rig.shares + " shares");
+        $('#pool_txt').text("Pool : " + data.rig.pool);
+            
+        var hashrate_average = 0; // Moyenne Températures
+        var temp_average = 0; // Moyenne Températures
+        var fan_speeds_average = 0; // Moyenne Vitesses des ventilos
+
+        data.rig.cards.forEach(element => {
+          hashrate_average = hashrate_average + (element.hashrate + 1 - 1);
+          temp_average = temp_average + (element.temp + 1 - 1) / 10;
+          fan_speeds_average = fan_speeds_average + (element.fan + 1 - 1) / 10;
+        });
+        hashrate_average = Math.round(hashrate_average / data.rig.cards.length * 10) / 10;
+        temp_average = Math.round(temp_average / data.rig.cards.length * 10) / 10;
+        fan_speeds_average = Math.round(fan_speeds_average / data.rig.cards.length * 10) / 10;
+        $('#hashrate_average_txt').text("Hashrate average : " + hashrate_average + " Mh/s");
+        $('#temp_average_txt').text("Temp average : " + temp_average + " °C");
+        $('#fanspeed_average_txt').text("Fan speed average : " + fan_speeds_average + " %");
+
+        var chart_labels = []; // Numéros des cartes
+
+        var chart_hashrate = []; // Hashrates
+        var chart_temp = []; // Températures
+        var chart_fan_speeds = []; // Vitesses des ventilos
+
+        var chart_hashrate_average = []; // Moyenne Vitesses des ventilos
+        var chart_temp_average = []; // Moyenne Températures
+        var chart_fan_speeds_average = []; // Moyenne Vitesses des ventilos
+
+        var forNum2 = 0;
+        data.rig.cards.forEach(element => {
+          chart_labels.push("GPU"+forNum2);
+          chart_hashrate.push(element.hashrate);
+
+          chart_temp.push(element.temp);
+          chart_fan_speeds.push(element.fan);
+          chart_hashrate_average.push(hashrate_average);
+          chart_temp_average.push(temp_average);
+          chart_fan_speeds_average.push(fan_speeds_average);
+          ++forNum2;
+        });
+
+        chart1_config.data.labels = chart_labels;
+        chart1_config.data.datasets[0].data = chart_hashrate;
+        chart1_config.data.datasets[1].data = chart_hashrate_average;
+        
+        chart2_config.data.labels = chart_labels;
+        chart2_config.data.datasets[0].data = chart_temp;
+        chart2_config.data.datasets[1].data = chart_fan_speeds;
+        chart2_config.data.datasets[2].data = chart_temp_average;
+        chart2_config.data.datasets[3].data = chart_fan_speeds_average;
+
+        window.chart1.update();
+        window.chart2.update();
+      });
+
+    </script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-light_blue.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+    </style>
+  </head>
+  <body>
+    <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
+      <header class="demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600">
+        <div class="mdl-layout__header-row">
+          <span class="mdl-layout-title">Home</span>
+      </header>
+      <div class="demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50">
+        <nav class="demo-navigation mdl-navigation mdl-color--blue-grey-800">
+          <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">dashboard</i>Dashboard</a>
+          <a class="mdl-navigation__link" href=""><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">settings</i>Settings</a>
+          <a class="mdl-navigation__link" onclick="fullscreen();"><i class="mdl-color-text--blue-grey-400 material-icons" role="presentation">fullscreen</i>Fullscreen</a>
+        </nav>
+      </div>
+      <main class="mdl-layout__content mdl-color--grey-100">
+        <div class="mdl-grid demo-content">
+          <div class="demo-graphs mdl-shadow--2dp mdl-color--white mdl-cell mdl-cell--8-col">
+            <h5>Stats</h5>
+            <h7 id="hashrate_txt">Hashrate : 0.0 Mh/s</h7>
+            <h7 id="shares_txt">Shares : 0 shares</h7>
+            <h7 id="pool_txt">Pool : localhost:9999</h7>
+          </div>
+          <div class="demo-cards mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-grid mdl-grid--no-spacing">
+              <div class="demo-options mdl-card mdl-color--deep-purple-500 mdl-shadow--2dp mdl-cell mdl-cell--4-col mdl-cell--3-col-tablet mdl-cell--12-col-desktop">
+                <div class="mdl-card__supporting-text mdl-color-text--blue-grey-50">
+                  <ul>
+                    <li>
+                        <h7 id="hashrate_average_txt">Hashrate average : 0.0 Mh/s</h7>
+                    </li>
+                    <li>
+                        <h7 id="temp_average_txt">Temp average : 0 °C</h7>
+                    </li>
+                    <li>
+                        <h7 id="fanspeed_average_txt">Fan speed average : 0 %</h7>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          <div class="demo-graphs mdl-shadow--2dp mdl-color--white mdl-cell mdl-cell--8-col">
+            <canvas id="canvas"></canvas>
+            </br>
+            <canvas id="canvas2"></canvas>
+            <script>
+            
+              var chart1_config = {
+                  type: 'line',
+                  data: {
+                    labels: [],
+                    datasets: [{
+                      label: 'Hashrate',
+                      backgroundColor: 'rgb(140, 187, 251)',
+                      borderColor: 'rgb(54, 162, 235)',
+                      data: [],
+                      fill: 1,
+                      pointRadius: 5,
+                      cubicInterpolationMode: 'monotone',
+                      lineTension: 1
+                    },
+                    {
+                      label: '',
+                      borderColor: 'rgb(54, 162, 235)',
+                      data: [],
+                      fill: false,
+                      pointRadius: 5,
+                      cubicInterpolationMode: 'monotone',
+                      lineTension: 1,
+                      borderDash: [5, 5]
+                    }]
+                  },
+                  options: {
+                    responsive: true,
+                    title: {
+                      display: true,
+                      text: 'Cards hashrate'
+                    },
+                    scales: {
+                      yAxes: [{
+                        ticks: {
+                          suggestedMin: 25,
+                          suggestedMax: 30
+                        }
+                      }]
+                    }
+                  }
+                };
+
+                var chart2_config = {
+                  type: 'line',
+                  data: {
+                    labels: [],
+                    datasets: [{
+                      label: 'Temperature',
+                      borderColor: 'rgb(255, 99, 132)',
+                      data: [],
+                      fill: 2,
+                      pointRadius: 5,
+                      cubicInterpolationMode: 'monotone',
+                      lineTension: 1
+                    },
+                    {
+                      label: 'Fan speed',
+                      borderColor: 'rgb(255, 205, 86)',
+                      data: [],
+                      fill: false,
+                      pointRadius: 5,
+                      cubicInterpolationMode: 'monotone',
+                      lineTension: 1,
+                    },
+                    {
+                      label: '',
+                      borderColor: 'rgb(255, 99, 132)',
+                      data: [],
+                      fill: false,
+                      pointRadius: 5,
+                      cubicInterpolationMode: 'monotone',
+                      lineTension: 1,
+                      borderDash: [5, 5]
+                    },
+                    {
+                      label: '',
+                      borderColor: 'rgb(255, 205, 86)',
+                      data: [],
+                      fill: false,
+                      pointRadius: 5,
+                      cubicInterpolationMode: 'monotone',
+                      lineTension: 1,
+                      borderDash: [5, 5]
+                    }]
+                  },
+                  options: {
+                    responsive: true,
+                    title: {
+                      display: true,
+                      text: 'Cards Tempratures'
+                    },
+                    scales: {
+                      yAxes: [{
+                        ticks: {
+                          suggestedMin: 30,
+                          suggestedMax: 80
+                        }
+                      }]
+                    }
+                  }
+                };
+            
+                window.onload = function() {
+                  var ctx1 = document.getElementById('canvas').getContext('2d');
+                  window.chart1 = new Chart(ctx1, chart1_config);
+
+                  var ctx2 = document.getElementById('canvas2').getContext('2d');
+                  window.chart2 = new Chart(ctx2, chart2_config);
+                };
+            
+              </script>
+          </div>
+          <div class="demo-cards mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-grid mdl-grid--no-spacing">
+            <div class="demo-options mdl-card mdl-color--deep-purple-500 mdl-shadow--2dp mdl-cell mdl-cell--4-col mdl-cell--3-col-tablet mdl-cell--12-col-desktop">
+              <div class="mdl-card__supporting-text mdl-color-text--blue-grey-50">
+                <h3>Chart options</h3>
+                <ul>
+                  <li>
+                    <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="switch-1">
+                      <input type="checkbox" id="switch-1" class="mdl-switch__input" checked>
+                      <span class="mdl-switch__label">Line mode</span>
+                    </label>
+                  </li>
+                  <li>
+                    <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="switch-2">
+                      <input type="checkbox" id="switch-2" class="mdl-switch__input" checked>
+                      <span class="mdl-switch__label">Smooth line</span>
+                    </label>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="mdl-mini-footer">
+          <div class="mdl-mini-footer__left-section">
+            This tool is free. If you like it, please donate :D</br></br>
+            ETH : 0x22e024f441efb2109edc822a013f575ebfebba38</br>
+            BTC : 1KCehKru5UJWB5NjbDYVSA49DQh7t2gb22</br>
+            Paypal : <a href="https://www.paypal.me/MathieuColmon">paypal.me/MathieuColmon</a></br></br>
+            Version : 1.0.0
+          </div>
+        </footer>
+      </main>
+    </div>
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script>
+      
+      if (getCookie("linemode") == 1){
+        chart1_config.type = "line";
+      }else{
+        chart1_config.type = "bar";
+        $('#switch-1').removeAttr('checked');
+      }
+
+      if (getCookie("linesmooth") == 1){
+        chart1_config.data.datasets[0].lineTension = 1;
+        chart2_config.data.datasets[0].lineTension = 1;
+        chart2_config.data.datasets[1].lineTension = 1;
+      }else{
+        chart1_config.data.datasets[0].lineTension = 0;
+        chart2_config.data.datasets[0].lineTension = 0;
+        chart2_config.data.datasets[1].lineTension = 0;
+        $('#switch-2').removeAttr('checked');
+      }
+
+      $('#switch-1').on('click', function() { // Line mode switch event
+        if ($('#switch-1').is(':checked')){
+          document.cookie = "linemode=1";
+          chart1_config.type = "line";
+        }else{
+          document.cookie = "linemode=0";
+          chart1_config.type = "bar";
+        }
+        window.chart1.update();
+      });
+
+      $('#switch-2').on('click', function() { // Smooth line switch event
+        if ($('#switch-2').is(':checked')){
+          document.cookie = "linesmooth=1";
+          chart1_config.data.datasets[0].lineTension = 1;
+          chart2_config.data.datasets[0].lineTension = 1;
+          chart2_config.data.datasets[1].lineTension = 1;
+        }else{
+          document.cookie = "linesmooth=0";
+          chart1_config.data.datasets[0].lineTension = 0;
+          chart2_config.data.datasets[0].lineTension = 0;
+          chart2_config.data.datasets[1].lineTension = 0;
+        }
+        window.chart1.update();
+      });
+
+      function fullscreen(){
+        var docElm = document.documentElement;
+        if (docElm.requestFullscreen) {
+            docElm.requestFullscreen();
+        }
+        else if (docElm.mozRequestFullScreen) {
+            docElm.mozRequestFullScreen();
+        }
+        else if (docElm.webkitRequestFullScreen) {
+            docElm.webkitRequestFullScreen();
+        }
+      }
+    </script>
+  </body>
+</html>
