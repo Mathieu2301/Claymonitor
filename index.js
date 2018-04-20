@@ -4,7 +4,7 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 const socket = require('net');
 var { Client } = require('tplink-smarthome-api');
-
+//a
 var rig_infos = {
 	hashrate: 0.0,
 	shares: 0,
