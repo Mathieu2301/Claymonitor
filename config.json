@@ -1,6 +1,1 @@
-{
-    "tplink_wattmetter_ip": "XXXX",
-    "claymore_remote_ip": "localhost",
-    "claymore_remote_port": 3333,
-    "claymore_remote_interval": 3000
-}
+{"tplink_wattmetter_ip":"localhost","claymore_remote_ip":"localhost","claymore_remote_port":3333,"claymore_remote_interval":3000}
